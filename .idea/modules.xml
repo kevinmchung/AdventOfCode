@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/AdventOfCode.iml" filepath="$PROJECT_DIR$/.idea/AdventOfCode.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../AI/Sudoku/.idea/Sudoku.iml" filepath="$PROJECT_DIR$/../../../AI/Sudoku/.idea/Sudoku.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../autopgn/.idea/autopgn.iml" filepath="$PROJECT_DIR$/../../../autopgn/.idea/autopgn.iml" />
+    </modules>
+  </component>
+</project>
