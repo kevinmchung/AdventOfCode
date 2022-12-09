@@ -1,7 +1,6 @@
 from collections import defaultdict
 import sys
 
-
 lines = [line.strip() for line in open("Day6.txt")]
 # lines = list(map(int, lines))
 
