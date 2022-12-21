@@ -28,7 +28,7 @@ answers = [6, 0, 0, 0, 2, 12, 2, 0, 1, 0, 0, 1, 9, 0, 1, 4, 6, 0, 10, 0, 0, 2, 6
 
 ans = 0
 ans2 = 1
-mins = 24
+mins = 32
 
 # for i in range(len(costs)):
 #     starts = []
@@ -88,71 +88,91 @@ mins = 24
 #     if highest != answers[i]:
 #         print(i + 1, highest)
 
-np.seterr(invalid="ignore", divide="ignore")
-for i in range(len(costs)):
-    cost = np.array(costs[i])
-
-    max_robs = [max(c[j] for c in cost) for j in range(4)]
-    max_robs[3] = 100
+cache = {}
+highest = defaultdict(int)
+def max_geodes(m, robs, rocks, cost, goal):
+    global mins, cache, highest
+    if m == mins:
+        return rocks[3]
     
+    if rocks[3] < highest[m] - 1:
+        return 0
+    if rocks[3] > highest[m]:
+        highest[m] = rocks[3]
+
+    max_ore = max(cost[i][0] for i in range(4))
+    if (goal == 0 and robs[0] >= max_ore) or (goal == 1 and robs[1] >= cost[2][1]) or \
+        (goal == 2 and (robs[2] >= cost[3][2] or robs[1] == 0)) or (goal == 3 and robs[2] == 0):
+        return 0
+
+    state = (m, robs, rocks, goal)
+    if state in cache:
+        return cache[state]
+
+    maxval = 0
+    while m < mins:
+        if goal == 0 and cost[0][0] <= rocks[0]:
+            temp = 0
+            for g in range(4):
+                newrocks = [rocks[i] + robs[i] for i in range(4)]
+                newrocks[0] -= cost[0][0]
+                newrobs = list(robs)
+                newrobs[0] += 1
+                temp = max(temp, max_geodes(m + 1, tuple(newrobs), tuple(newrocks), cost, g))
+            maxval = max(maxval, temp)
+            cache[state] = maxval
+            return maxval
+        elif goal == 1 and cost[1][0] <= rocks[0]:
+            temp = 0
+            for g in range(4):
+                newrocks = [rocks[i] + robs[i] for i in range(4)]
+                newrocks[0] -= cost[1][0]
+                newrobs = list(robs)
+                newrobs[1] += 1
+                temp = max(temp, max_geodes(m + 1, tuple(newrobs), tuple(newrocks), cost, g))
+            maxval = max(maxval, temp)
+            cache[state] = maxval
+            return maxval
+        elif goal == 2 and cost[2][0] <= rocks[0] and cost[2][1] <= rocks[1]:
+            temp = 0
+            for g in range(4):
+                newrocks = [rocks[i] + robs[i] for i in range(4)]
+                newrocks[0] -= cost[2][0]
+                newrocks[1] -= cost[2][1]
+                newrobs = list(robs)
+                newrobs[2] += 1
+                temp = max(temp, max_geodes(m + 1, tuple(newrobs), tuple(newrocks), cost, g))
+            maxval = max(maxval, temp)
+            cache[state] = maxval
+            return maxval
+        elif goal == 3 and cost[3][0] <= rocks[0] and cost[3][2] <= rocks[2]:
+            temp = 0
+            for g in range(4):
+                newrocks = [rocks[i] + robs[i] for i in range(4)]
+                newrocks[0] -= cost[3][0]
+                newrocks[2] -= cost[3][2]
+                newrobs = list(robs)
+                newrobs[3] += 1
+                temp = max(temp, max_geodes(m + 1, tuple(newrobs), tuple(newrocks), cost, g))
+            maxval = max(maxval, temp)
+            cache[state] = maxval
+            return maxval
+        m += 1
+        rocks = tuple(rocks[i] + robs[i] for i in range(4))
+        maxval = max(maxval, rocks[3])
+
+    cache[state] = maxval
+    return maxval
+                
+for i in range(len(costs)):
+    cache = {}
     highest = defaultdict(int)
-    start = (0, (1, 0, 0, 0), (0, 0, 0, 0))
-    # start = (8, (2, 2, 0, 0), (3, 2, 0, 0))
-    q = [start]
-    visited = {start}
-    while q:
-        m, robs, rocks = q.pop(0)
-
-        if rocks[3] < highest[m] * 0.5:
-            continue
-        if rocks[3] > highest[m]:
-            highest[m] = rocks[3]
-
-        built = False
-        
-        for c in range(4):
-            newrocks = np.array(rocks)
-            newrobs = np.array([0, 0, 0, 0])
-
-            t = (cost[c] - newrocks) / robs
-            valid = True
-            for j in range(4):
-                if cost[c][j] > 0 and not np.isfinite(t)[j]:
-                    valid = False
-            
-            
-            if valid:
-                dt = int(np.max(np.ceil(t[np.isfinite(t)]))) + 1
-                if m + dt > mins:
-                    continue
-                newrocks += np.array(robs) * dt
-                if robs[c] < max_robs[c]:
-                    if c == 0:
-                        if np.all(cost[c] <= newrocks) and robs[1] < 1:
-                            build = True
-                    elif c == 1:
-                        if np.all(cost[c] <= newrocks):
-                            build = True
-                    elif c == 2:
-                        if np.all(cost[c] <= newrocks):
-                            build = True
-                    elif c == 3:
-                        if np.all(cost[c] <= newrocks):
-                            build = True
-                            
-            if build:
-                built = True
-                newrobs[c] += 1
-                newrocks -= cost[c]
-                state = (m + dt, tuple(robs + newrobs), tuple(newrocks))
-                # if state not in visited:
-                #     visited.add(state)
-                q.append(state)
-
-    print(highest[mins])
-    ans += highest[mins] * (i + 1)
-    ans2 *= highest[mins]
-                    
+    m = 0
+    for g in range(4):
+        m = max(m, max_geodes(0, (1, 0, 0, 0), (0, 0, 0, 0), costs[i], g))
+    print(m)
+    ans += m * (i + 1)
+    ans2 *= m
 
 print(ans)
 print(ans2)
