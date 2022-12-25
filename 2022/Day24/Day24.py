@@ -2,7 +2,6 @@
 # Part 2: 277
 
 import re
-from queue import PriorityQueue
 from collections import defaultdict
 import numpy as np
 
